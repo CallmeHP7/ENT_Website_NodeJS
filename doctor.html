@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meet Our Doctors</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .doctors {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .doctor-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            width: 250px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .doctor-card img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+        }
+        .btn {
+            background: #007BFF;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Meet Our Doctors</h2>
+        <div class="doctors">
+            <div class="doctor-card">
+                <img src="Images/Image1.jpg" alt="Dr. Aabha Jaiswal">
+                <h3>Dr. Aabha Jaiswal</h3>
+                <p>ENT Specialist</p>
+                <a href="appointment_aabha.html" class="btn">Book Appointment</a>
+            </div>
+            <div class="doctor-card">
+                <img src="Images/Image1.jpg" alt="Dr. Harshit Pandey">
+                <h3>Dr. Harshit Pandey</h3>
+                <p>ENT Surgeon</p>
+                <a href="appointment_harshit.html" class="btn">Book Appointment</a>
+            </div>
+            <div class="doctor-card">
+                <img src="Images/Image1.jpg" alt="Dr. I. Dillesh Rao">
+                <h3>Dr. I. Dillesh Rao</h3>
+                <p>Audiologist</p>
+                <a href="appointment_dilesh.html" class="btn">Book Appointment</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

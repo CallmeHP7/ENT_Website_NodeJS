@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Patient Dashboard</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e3f2fd;
+    }
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      background: #0288d1;
+      color: white;
+      position: fixed;
+      padding: 20px;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background: #0277bd;
+    }
+    .content {
+      margin-left: 270px;
+      padding: 20px;
+    }
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+      margin-bottom: 20px;
+    }
+    .profile img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    #patientId {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    #aadharNumber {
+      margin: 5px 0;
+    }
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+    /* Table styling for My Appointments */
+    #appointmentsTable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #appointmentsTable th, #appointmentsTable td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    #appointmentsTable th {
+      background-color: #f2f2f2;
+    }
+    /* Table styling for Prescriptions */
+    #prescriptionsTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    #prescriptionsTable th, #prescriptionsTable td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    #prescriptionsTable th {
+      background-color: #f2f2f2;
+    }
+    /* Table styling for Medical Tests */
+    #medicalTestsTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    #medicalTestsTable th, #medicalTestsTable td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    #medicalTestsTable th {
+      background-color: #f2f2f2;
+    }
+    /* Additional styling for buttons */
+    .card button,
+    .table-btn {
+      margin-top: 5px;
+      padding: 5px 10px;
+      background: #0288d1;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .card button:hover,
+    .table-btn:hover {
+      background: #0277bd;
+    }
+  </style>
+  <!-- Include jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Health Monitoring</h2>
+    <a onclick="showSection('home')">Home</a>
+    <a onclick="showSection('appointments')">My Appointments</a>
+    <a onclick="showSection('prescriptions')">My Prescriptions</a>
+    <a onclick="showSection('medicalTests')">My Medical Tests</a>
+    <a onclick="showSection('history')">Medical History</a>
+    <a onclick="showSection('bookAppointment')">Book Appointment</a>
+    <a onclick="showSection('uploadReport')">Upload Report</a>
+    <a onclick="logout()">Logout</a>
+  </div>
+
+  <div class="content">
+    <!-- Patient Profile -->
+    <div class="profile">
+      <img id="profilePic" src="default.png" alt="Profile Picture">
+      <div>
+        <h2 id="patientId">Patient ID: N/A</h2>
+        <h3 id="patientName">Patient Name</h3>
+        <p id="patientDetails">Age: XX | DOB: YYYY-MM-DD</p>
+        <p id="aadharNumber">Aadhaar: N/A</p>
+      </div>
+    </div>
+
+    <!-- Home Section -->
+    <div id="home" class="section active">
+      <h2>Welcome to Your Dashboard</h2>
+      <p>Manage your health records and appointments with ease.</p>
+    </div>
+
+    <!-- My Appointments Section -->
+    <div id="appointments" class="section">
+      <h2>My Appointments</h2>
+      <table id="appointmentsTable">
+        <thead>
+          <tr>
+            <th>Doctor Name</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsList"></tbody>
+      </table>
+    </div>
+
+    <!-- My Prescriptions Section -->
+    <div id="prescriptions" class="section">
+      <h2>My Prescriptions</h2>
+      <div id="prescriptionsList"></div>
+    </div>
+
+    <!-- My Medical Tests Section -->
+    <div id="medicalTests" class="section">
+      <h2>My Medical Tests</h2>
+      <div id="medicalTestsList"></div>
+    </div>
+
+    <!-- Medical History Section -->
+    <div id="history" class="section">
+      <h2>Medical History</h2>
+      <ul id="historyList"></ul>
+    </div>
+
+    <!-- Book Appointment Section -->
+    <div id="bookAppointment" class="section">
+      <h2>Book an Appointment</h2>
+      <form id="appointmentForm">
+        <label for="doctor">Select Doctor:</label>
+        <select id="doctor" name="doctorId" required></select>
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+        <label for="time">Time:</label>
+        <input type="time" id="time" name="time" required>
+        <button type="submit">Book Appointment</button>
+      </form>
+    </div>
+
+    <!-- Upload Report Section -->
+    <div id="uploadReport" class="section">
+      <h2>Upload Report</h2>
+      <form id="uploadReportForm" enctype="multipart/form-data">
+        <label for="reportFile">Select Report:</label>
+        <input type="file" id="reportFile" required>
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Global arrays to store data for PDF generation
+    let prescriptionData = [];
+    let medicalTestData = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "patient_login.html";
+
+      // 1. Fetch Doctors for Appointment Booking
+      async function fetchDoctors() {
+        try {
+          const response = await fetch("http://localhost:5000/doctors");
+          const doctors = await response.json();
+          const doctorSelect = document.getElementById("doctor");
+          doctors.forEach(doc => {
+            const option = document.createElement("option");
+            option.value = doc._id;
+            option.textContent = doc.name;
+            doctorSelect.appendChild(option);
+          });
+        } catch (err) {
+          console.error("Error fetching doctors:", err);
+        }
+      }
+
+      // 2. Fetch Profile Data
+      async function fetchProfile() {
+        try {
+          const response = await fetch("http://localhost:5000/profile", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const user = await response.json();
+          
+          function calculateAge(dob) {
+            const birthDate = new Date(dob);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            if (today.getMonth() < birthDate.getMonth() ||
+                (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            return age;
+          }
+          
+          document.getElementById("patientId").textContent = user.patientId 
+            ? `Patient ID: ${user.patientId}` 
+            : "Patient ID: N/A";
+          document.getElementById("patientName").textContent = user.name;
+          document.getElementById("patientDetails").textContent =
+            `Age: ${calculateAge(user.dob)} | DOB: ${user.dob || "N/A"}`;
+          document.getElementById("aadharNumber").textContent = user.aadhar
+            ? `Aadhaar: ${user.aadhar}`
+            : "Aadhaar: N/A";
+          
+          document.getElementById("profilePic").src = user.photo
+            ? `http://localhost:5000${user.photo}`
+            : "default.png";
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        }
+      }
+
+      // 3. Fetch My Appointments
+      async function fetchMyAppointments() {
+        try {
+          const response = await fetch("http://localhost:5000/appointments/mine", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const myAppointments = await response.json();
+          const appointmentsList = document.getElementById("appointmentsList");
+          
+          appointmentsList.innerHTML = myAppointments.map(app => `
+            <tr>
+              <td>${app.doctorId?.name || "N/A"}</td>
+              <td>${app.date || "N/A"}</td>
+              <td>${app.time || "N/A"}</td>
+              <td>${app.status || "Pending"}</td>
+            </tr>
+          `).join("");
+        } catch (error) {
+          console.error("Error fetching my appointments:", error);
+        }
+      }
+
+      // 4. Fetch My Prescriptions (Tabular form + S. No.)
+      async function fetchPrescriptions() {
+        try {
+          const response = await fetch("http://localhost:5000/patient/prescriptions", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const prescriptions = await response.json();
+          prescriptionData = prescriptions; // for PDF generation
+          
+          let html = "";
+          if (prescriptions.length === 0) {
+            html = "<p>No prescriptions found.</p>";
+          } else {
+            html += `<table id="prescriptionsTable">
+              <thead>
+                <tr>
+                  <th>S. No.</th>
+                  <th>Doctor</th>
+                  <th>Date</th>
+                  <th>Patient Name</th>
+                  <th>Patient ID</th>
+                  <th>Medicines</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>`;
+            prescriptions.forEach((prescription, index) => {
+              let medsHTML = "";
+              prescription.medicines.forEach(med => {
+                medsHTML += `${med.medicine} (${med.dosage}, ${med.frequency}, ${med.duration})<br>`;
+              });
+              html += `<tr>
+                  <td>${index + 1}</td>
+                  <td>${prescription.doctorId.name}</td>
+                  <td>${new Date(prescription.date).toLocaleDateString()}</td>
+                  <td>${prescription.patientId?.name || "N/A"}</td>
+                  <td>${prescription.patientId?.patientId || "N/A"}</td>
+                  <td>${medsHTML}</td>
+                  <td>
+                    <button class="table-btn" onclick="downloadPrescriptionPDF('${prescription._id}')">
+                      Download PDF
+                    </button>
+                  </td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+          }
+          document.getElementById("prescriptionsList").innerHTML = html;
+        } catch (error) {
+          console.error("Error fetching prescriptions:", error);
+        }
+      }
+
+      // 5. Fetch My Medical Tests (Tabular form + S. No. + PDF Download)
+      async function fetchMedicalTests() {
+        try {
+          const response = await fetch("http://localhost:5000/patient/medicaltests", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const tests = await response.json();
+          medicalTestData = tests; // for PDF generation
+
+          let html = "";
+          if (tests.length === 0) {
+            html = "<p>No medical tests found.</p>";
+          } else {
+            html += `<table id="medicalTestsTable">
+              <thead>
+                <tr>
+                  <th>S. No.</th>
+                  <th>Doctor</th>
+                  <th>Date</th>
+                  <th>Patient Name</th>
+                  <th>Patient ID</th>
+                  <th>Tests</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>`;
+            tests.forEach((testRecord, index) => {
+              let testHTML = "";
+              testRecord.tests.forEach(t => {
+                testHTML += `${t.testName} (${t.notes})<br>`;
+              });
+              html += `<tr>
+                <td>${index + 1}</td>
+                <td>${testRecord.doctorId.name}</td>
+                <td>${new Date(testRecord.date).toLocaleDateString()}</td>
+                <td>${testRecord.patientId?.name || "N/A"}</td>
+                <td>${testRecord.patientId?.patientId || "N/A"}</td>
+                <td>${testHTML}</td>
+                <td>
+                  <button class="table-btn" onclick="downloadMedicalTestPDF('${testRecord._id}')">
+                    Download PDF
+                  </button>
+                </td>
+              </tr>`;
+            });
+            html += `</tbody></table>`;
+          }
+          document.getElementById("medicalTestsList").innerHTML = html;
+        } catch (error) {
+          console.error("Error fetching medical tests:", error);
+        }
+      }
+
+      // 6. Section Switching
+      window.showSection = (id) => {
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        
+        if (id === "appointments") {
+          fetchMyAppointments();
+        } else if (id === "prescriptions") {
+          fetchPrescriptions();
+        } else if (id === "medicalTests") {
+          fetchMedicalTests();
+        }
+      };
+
+      // 7. Report Upload
+      document.getElementById("uploadReportForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById("reportFile");
+        const formData = new FormData();
+        formData.append("report", fileInput.files[0]);
+        try {
+          const response = await fetch("http://localhost:5000/upload-report", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+          });
+          if (!response.ok) throw new Error("Failed to upload report");
+          alert("Report uploaded successfully!");
+          fileInput.value = "";
+        } catch (error) {
+          console.error("Error uploading report:", error);
+          alert("Failed to upload report.");
+        }
+      });
+
+      // 8. Appointment Form Submission
+      document.getElementById("appointmentForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+        const doctorId = document.getElementById("doctor").value;
+        const date = document.getElementById("date").value;
+        const time = document.getElementById("time").value;
+
+        try {
+          const response = await fetch("http://localhost:5000/appointments", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ doctorId, date, time })
+          });
+          const result = await response.json();
+          alert(result.message);
+          document.getElementById("appointmentForm").reset();
+          fetchMyAppointments();
+        } catch (error) {
+          console.error("Error booking appointment:", error);
+          alert("Failed to book appointment.");
+        }
+      });
+
+      // 9. Logout
+      window.logout = () => {
+        localStorage.removeItem("token");
+        window.location.href = "patient_login.html";
+      };
+
+      // 10. Initialize
+      await fetchProfile();
+      await fetchDoctors();
+    });
+
+    // PRINT FUNCTIONS (if you still need them)
+    function printPrescription(id) {
+      const printContents = document.getElementById("prescription-" + id).innerHTML;
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      location.reload();
+    }
+
+    function printMedicalTest(id) {
+      const printContents = document.getElementById("medicalTest-" + id).innerHTML;
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      location.reload();
+    }
+
+    // PDF Generation for Prescriptions
+    function downloadPrescriptionPDF(prescriptionId) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Find the prescription object from the global array
+      const pres = prescriptionData.find(p => p._id === prescriptionId);
+      if (!pres) {
+        alert("Prescription not found!");
+        return;
+      }
+
+      // Title & Basic Info
+      doc.setFontSize(18);
+      doc.text("Prescription", 10, 10);
+      doc.setFontSize(12);
+      doc.text(`Patient Name: ${pres.patientId?.name || "N/A"}`, 10, 30);
+      doc.text(`Patient ID: ${pres.patientId?.patientId || "N/A"}`, 10, 40);
+      doc.text(`Doctor Name: ${pres.doctorId?.name || "N/A"}`, 10, 50);
+      doc.text(`Date: ${new Date(pres.date).toLocaleDateString()}`, 10, 60);
+
+      // List each medication
+      let yPos = 80;
+      pres.medicines.forEach((med, index) => {
+        doc.text(
+          `${index + 1}. ${med.medicine} - ${med.dosage}, ${med.frequency}, for ${med.duration}`,
+          10,
+          yPos
+        );
+        yPos += 10;
+      });
+
+      doc.save(`Prescription_${pres.patientId?.patientId || "Unknown"}_${prescriptionId}.pdf`);
+    }
+
+    // PDF Generation for Medical Tests
+    function downloadMedicalTestPDF(testId) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Find the test record from the global array
+      const testRec = medicalTestData.find(t => t._id === testId);
+      if (!testRec) {
+        alert("Test record not found!");
+        return;
+      }
+
+      // Title & Basic Info (similar style to your attached image)
+      doc.setFontSize(16);
+      doc.text(`Test Prescription #${testRec._id}`, 10, 10);
+      doc.setFontSize(12);
+      // Right-align the date (x=150, or adjust as needed)
+      doc.text(`Date: ${new Date(testRec.date).toLocaleDateString()}`, 150, 10);
+
+      // Patient Information
+      doc.text("Patient Information", 10, 30);
+      doc.text(`Name: ${testRec.patientId?.name || "N/A"}`, 10, 40);
+      doc.text(`Patient ID: ${testRec.patientId?.patientId || "N/A"}`, 10, 50);
+      // If you track gender in your backend, you can show it here:
+      // doc.text(`Gender: ${testRec.patientId?.gender || "N/A"}`, 10, 60);
+
+      // Doctor / Physician Info
+      doc.text("Prescribing Physician", 110, 30);
+      doc.text(`Dr. ${testRec.doctorId?.name || "N/A"}`, 110, 40);
+      // doc.text(`License: ${testRec.doctorId?.license || "N/A"}`, 110, 50);
+
+      // Tests Section
+      doc.text("Tests:", 10, 70);
+
+      let yPos = 80;
+      testRec.tests.forEach((t, index) => {
+        doc.text(`${index + 1}. ${t.testName}`, 10, yPos);
+        doc.text(`Notes: ${t.notes}`, 10, yPos + 10);
+        yPos += 20; // spacing
+      });
+
+      // Save PDF
+      doc.save(`MedicalTest_${testRec.patientId?.patientId || "Unknown"}_${testId}.pdf`);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Doctor Dashboard</title>
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #e3f2fd;
+      }
+      .sidebar {
+        width: 250px;
+        height: 100vh;
+        background: #0288d1;
+        color: white;
+        position: fixed;
+        padding: 20px;
+      }
+      .sidebar h2 {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .sidebar a {
+        display: block;
+        color: white;
+        text-decoration: none;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        transition: 0.3s;
+        cursor: pointer;
+      }
+      .sidebar a:hover {
+        background: #0277bd;
+      }
+      .content {
+        margin-left: 270px;
+        padding: 20px;
+      }
+      .profile,
+      .card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+      }
+      .hidden {
+        display: none;
+      }
+      button {
+        margin: 5px;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background: #0288d1;
+        color: white;
+        cursor: pointer;
+      }
+      button.reject {
+        background: red;
+      }
+      /* Table styling for My Patients */
+      #patientsTable {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      #patientsTable th,
+      #patientsTable td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+      #patientsTable th {
+        background-color: #f2f2f2;
+      }
+      /* Table styling for Prescription */
+      #prescriptionTable {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      #prescriptionTable th,
+      #prescriptionTable td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+      #prescriptionTable th {
+        background-color: #f2f2f2;
+      }
+      /* Minimal form styling for Add Medication */
+      .medication-form label {
+        display: inline-block;
+        width: 120px;
+        margin-bottom: 5px;
+      }
+      .medication-form select,
+      .medication-form input {
+        margin-bottom: 10px;
+        padding: 5px;
+      }
+      .medication-form button {
+        margin-left: 5px;
+      }
+      /* Styles for the new Patient Info inputs in Prescription & Medical Tests */
+      .patient-info {
+        background: #f9f9f9;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .patient-info label {
+        margin-right: 5px;
+      }
+      .patient-info input {
+        margin-right: 15px;
+        padding: 5px;
+      }
+      /* Table styling for Medical Tests */
+      #medicalTestsTable {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      #medicalTestsTable th,
+      #medicalTestsTable td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+      #medicalTestsTable th {
+        background-color: #f2f2f2;
+      }
+      /* Styles for Advanced Imaging Analysis Section */
+      .dicom-tabs {
+        margin-bottom: 15px;
+      }
+      .dicom-tabs button {
+        margin: 5px;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background: #0288d1;
+        color: white;
+        cursor: pointer;
+      }
+      .dicom-tabs button:hover {
+        background: #0277bd;
+      }
+      .dicom-image-container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      .dicom-image-container .dicom-image {
+        text-align: center;
+      }
+      .dicom-image-container img {
+        max-width: 250px;
+        height: auto;
+      }
+    </style>
+    
+  </head>
+  <body>
+    <div class="sidebar">
+      <h2>Doctor Dashboard</h2>
+      <a onclick="showSection('home')">Home</a>
+      <a onclick="showSection('appointments')">Appointments</a>
+      <a onclick="showSection('patients')">My Patients</a>
+      <!-- NEW TABS -->
+      <a onclick="showSection('patientPrescription')">Patient Prescription</a>
+      <a onclick="showSection('patientReports')">Patient Reports</a>
+      <a onclick="showSection('medicalTests')">Medical Tests</a>
+      <a onclick="showSection('advancedImaging')">Advanced Imaging Analysis</a>
+      <a href="audiometry.html">Audiometry</a>
+      <a onclick="showSection('settings')">Settings</a>
+    </div>
+
+    <div class="content">
+      <!-- Home Section -->
+      <div id="home" class="section">
+        <div class="profile">
+          <img id="profilePic" src="default.png" alt="Profile Picture" style="width: 80px; border-radius: 50%;" />
+          <div>
+            <h2 id="doctorName">Hello, Dr. Name</h2>
+            <p id="doctorDetails">License No: XXXXX | Specialization: XYZ</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments Section -->
+      <div id="appointments" class="section hidden">
+        <h2>Appointment Requests</h2>
+        <div id="appointmentList"></div>
+      </div>
+
+      <!-- Patients Section -->
+      <div id="patients" class="section hidden">
+        <h2>My Patients</h2>
+        <table id="patientsTable">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Patient Name</th>
+              <th>Age</th>
+              <th>DOB</th>
+              <th>Aadhaar</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="patientList"></tbody>
+        </table>
+      </div>
+
+      <!-- Patient Prescription Section -->
+      <div id="patientPrescription" class="section hidden">
+        <h2>Patient Prescription</h2>
+        <!-- New Patient Info Inputs -->
+        <div class="patient-info">
+          <label for="prescriptionPatientId">Patient ID:</label>
+          <!-- This should be the custom patient id (e.g., 1001) -->
+          <input type="text" id="prescriptionPatientId" placeholder="Enter Patient ID" />
+          <label for="prescriptionPatientName">Patient Name:</label>
+          <input type="text" id="prescriptionPatientName" placeholder="Enter Patient Name" />
+        </div>
+        <div class="medication-form">
+          <label for="medicineName">Medicine Name:</label>
+          <select id="medicineName">
+            <option value="Paracetamol">Paracetamol</option>
+            <option value="Amoxicillin">Amoxicillin</option>
+            <option value="Monoclonal">Monoclonal</option>
+            <option value="Omeprazole">Omeprazole</option>
+            <option value="Diclofenac">Diclofenac</option>
+          </select>
+          <br />
+          <label for="dosage">Dosage (e.g. 500mg):</label>
+          <input type="text" id="dosage" placeholder="500mg" />
+          <br />
+          <label for="frequency">Frequency:</label>
+          <select id="frequency">
+            <option value="1x1">1x1</option>
+            <option value="1x2">1x2</option>
+            <option value="1x3">1x3</option>
+          </select>
+          <br />
+          <label for="duration">Duration:</label>
+          <input type="text" id="duration" placeholder="5 days" />
+          <br />
+          <button onclick="addMedication()">Add Medication</button>
+          <button onclick="submitPrescription()">Submit Prescription</button>
+        </div>
+        <table id="prescriptionTable">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Dosage</th>
+              <th>Frequency</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody id="prescriptionBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Patient Reports Section -->
+      <div id="patientReports" class="section hidden">
+        <h2>Patient Reports</h2>
+        <p>Upload or view patient reports here (placeholder).</p>
+      </div>
+
+      <!-- Medical Tests Section -->
+      <div id="medicalTests" class="section hidden">
+        <h2>Medical Tests</h2>
+        <!-- New Patient Info Inputs for Medical Tests -->
+        <div class="patient-info">
+          <label for="testPatientId">Patient ID:</label>
+          <input type="text" id="testPatientId" placeholder="Enter Patient ID" />
+          <label for="testPatientName">Patient Name:</label>
+          <input type="text" id="testPatientName" placeholder="Enter Patient Name" />
+        </div>
+        <div class="card">
+          <label for="testName">Select Test:</label>
+          <select id="testName">
+            <option value="Complete Blood Count (CBC)">Complete Blood Count (CBC)</option>
+            <option value="X-Ray Imaging">X-Ray Imaging</option>
+            <option value="Echocardiogram">Echocardiogram</option>
+            <option value="Ultrasound">Ultrasound</option>
+            <option value="Electrocardiogram (ECG)">Electrocardiogram (ECG)</option>
+            <option value="Lipid Profile">Lipid Profile</option>
+          </select>
+          <br /><br />
+          <label for="testNotes">Additional Notes:</label>
+          <input type="text" id="testNotes" placeholder="Optional Notes" />
+          <br /><br />
+          <button onclick="addTest()">Add Test</button>
+          <button onclick="submitMedicalTest()">Submit Medical Test</button>
+        </div>
+        <h3>Test Prescription</h3>
+        <table id="medicalTestsTable">
+          <thead>
+            <tr>
+              <th>Test Name</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="medicalTestsList"></tbody>
+        </table>
+      </div>
+
+      <!-- Advanced Imaging Analysis Section -->
+<div id="advancedImaging" class="section hidden">
+  <h2>Advanced Imaging Analysis</h2>
+  <div class="dicom-tabs">
+    <button onclick="setDicomModality('xray')">X-Ray Imaging</button>
+    <button onclick="setDicomModality('ultrasound')">Ultrasound</button>
+    <button onclick="setDicomModality('mri')">MRI</button>
+    <!-- New ImageJ Tab Button -->
+    <button onclick="openImageJTab()">ImageJ</button>
+  </div>
+
+  <div class="dicom-content">
+    <input
+      type="file"
+      id="dicomFile"
+      accept="image/*"
+      onchange="handleDicomFile(event)"
+    />
+
+    <div id="dicomImages" style="display:none; margin-top:20px;">
+      <div class="dicom-image-buttons">
+        <button onclick="showImage('grayscale')">Grayscale</button>
+        <button onclick="showImage('contrast')">Contrast Enhanced</button>
+        <button onclick="showImage('edge')">Detected Edges</button>
+        <button onclick="showImage('segmented')">Segmented</button>
+      </div>
+
+      <div class="dicom-image-container">
+        <div class="dicom-image" id="originalContainer">
+          <p>Original</p>
+          <img id="originalImage" alt="Original" />
+        </div>
+        <div class="dicom-image hidden" id="grayscaleContainer">
+          <p>Grayscale</p>
+          <img id="grayscaleImage" alt="Grayscale" />
+        </div>
+        <div class="dicom-image hidden" id="contrastContainer">
+          <p>Contrast Enhanced</p>
+          <img id="contrastImage" alt="Contrast Enhanced" />
+        </div>
+        <div class="dicom-image hidden" id="edgeContainer">
+          <p>Detected Edges</p>
+          <img id="edgeImage" alt="Detected Edges" />
+        </div>
+        <div class="dicom-image hidden" id="segmentedContainer">
+          <p>Segmented</p>
+          <img id="segmentedImage" alt="Segmented Image" />
+        </div>
+      </div>
+    </div>
+
+     <!-- ImageJ.js container (hidden by default) -->
+     <div id="imagejContainer" style="display:none; margin-top:20px;">
+      <!-- loads the WebAssembly ImageJ.js instance -->
+      <iframe
+        src="https://ij.imjoy.io/"
+        style="width:100%; height:600px; border:1px solid #ccc;"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
+</div>
+
+
+
+      <!-- Settings Section -->
+      <div id="settings" class="section hidden">
+        <h2>Settings</h2>
+        <p>Doctor Settings placeholder.</p>
+      </div>
+    </div>
+
+    <script>
+      // Section Switching
+      function showSection(sectionId) {
+        document.querySelectorAll(".section").forEach((section) => {
+          section.classList.add("hidden");
+        });
+        document.getElementById(sectionId).classList.remove("hidden");
+        if (sectionId === "appointments") {
+          fetchAppointments(); // Re-fetch appointments when showing this section
+        }
+      }
+
+      // Main function to load doctor data on page load
+      async function loadDoctorData() {
+        const token = localStorage.getItem("doctor_token");
+        if (!token) return (window.location.href = "doctor_login.html");
+
+        // 1) Fetch Doctor Profile
+        try {
+          const profileResponse = await fetch("http://localhost:5000/doctor/profile", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const doctor = await profileResponse.json();
+          document.getElementById("doctorName").textContent = `Dr. ${doctor.name}`;
+          document.getElementById("doctorDetails").textContent =
+            `License No: ${doctor.license} | Specialization: ${doctor.specialization}`;
+          if (doctor.photo) {
+            document.getElementById("profilePic").src = `http://localhost:5000${doctor.photo}`;
+          }
+        } catch (err) {
+          console.error("Error fetching doctor profile:", err);
+        }
+
+        // 2) Fetch Appointment Requests
+        fetchAppointments();
+
+        // 3) Fetch Accepted Patients (My Patients)
+        try {
+          const patientsResponse = await fetch("http://localhost:5000/doctor/patients", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const patients = await patientsResponse.json();
+          const patientList = document.getElementById("patientList");
+          patientList.innerHTML = patients
+            .map((patient) => {
+              let age = "N/A";
+              if (patient.dob) {
+                const birthDate = new Date(patient.dob);
+                const today = new Date();
+                let years = today.getFullYear() - birthDate.getFullYear();
+                if (
+                  today.getMonth() < birthDate.getMonth() ||
+                  (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())
+                ) {
+                  years--;
+                }
+                age = years;
+              }
+              return `
+                <tr>
+                  <td>${patient.patientId || "N/A"}</td>
+                  <td>${patient.name || "N/A"}</td>
+                  <td>${age}</td>
+                  <td>${patient.dob || "N/A"}</td>
+                  <td>${patient.aadhar || "N/A"}</td>
+                  <td>Accepted</td>
+                </tr>
+              `;
+            })
+            .join("");
+        } catch (err) {
+          console.error("Error fetching doctor patients:", err);
+        }
+      }
+
+      // Separate function to fetch appointments for clarity
+      async function fetchAppointments() {
+        const token = localStorage.getItem("doctor_token");
+        try {
+          const appointmentsResponse = await fetch("http://localhost:5000/doctor/appointments", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const appointments = await appointmentsResponse.json();
+          const appointmentList = document.getElementById("appointmentList");
+          appointmentList.innerHTML = appointments
+            .map((appointment) => `
+              <div class="card">
+                <h3>Patient Appointment Request</h3>
+                <p><strong>Patient:</strong> ${appointment.patientId ? appointment.patientId.name : "N/A"}</p>
+                <p><strong>Date:</strong> ${appointment.date || "N/A"} - ${appointment.time || "N/A"}</p>
+                <p><strong>Status:</strong> ${appointment.status || "Pending"}</p>
+                <button onclick="acceptAppointment('${appointment._id}')">Accept</button>
+                <button class="reject" onclick="rejectAppointment('${appointment._id}')">Reject</button>
+              </div>
+            `)
+            .join("");
+        } catch (err) {
+          console.error("Error fetching appointments:", err);
+        }
+      }
+
+      // Accept/Reject Appointment
+      async function acceptAppointment(id) {
+        const token = localStorage.getItem("doctor_token");
+        try {
+          await fetch(`http://localhost:5000/doctor/appointments/${id}/status`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: "Accepted" })
+          });
+          fetchAppointments(); // Refresh the appointments
+          loadDoctorData();    // Refresh the entire data, including My Patients
+        } catch (error) {
+          console.error("Error accepting appointment:", error);
+          alert("Failed to accept the appointment.");
+        }
+      }
+
+      async function rejectAppointment(id) {
+        const token = localStorage.getItem("doctor_token");
+        try {
+          await fetch(`http://localhost:5000/doctor/appointments/${id}/status`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: "Rejected" })
+          });
+          fetchAppointments();
+          loadDoctorData();
+        } catch (error) {
+          console.error("Error rejecting appointment:", error);
+          alert("Failed to reject the appointment.");
+        }
+      }
+
+      // ----------------------
+      // PRESCRIPTION Functions
+      // ----------------------
+      function addMedication() {
+        const medicine = document.getElementById("medicineName").value;
+        const dosage = document.getElementById("dosage").value;
+        const frequency = document.getElementById("frequency").value;
+        const duration = document.getElementById("duration").value;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${medicine}</td>
+          <td>${dosage}</td>
+          <td>${frequency}</td>
+          <td>${duration}</td>
+        `;
+        document.getElementById("prescriptionBody").appendChild(row);
+        document.getElementById("dosage").value = "";
+        document.getElementById("duration").value = "";
+      }
+
+      // Convert custom patientId to actual ObjectId
+      async function getPatientObjectId(customPatientId) {
+        try {
+          const token = localStorage.getItem("doctor_token");
+          const response = await fetch(`http://localhost:5000/doctor/getPatientByCustomId?patientId=${customPatientId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const patient = await response.json();
+          return patient._id; // Return the actual MongoDB ObjectId
+        } catch (err) {
+          console.error("Error fetching patient by custom ID:", err);
+          return null;
+        }
+      }
+
+      async function submitPrescription() {
+        const token = localStorage.getItem("doctor_token");
+        const customPatientId = document.getElementById("prescriptionPatientId").value;
+        const patientObjectId = await getPatientObjectId(customPatientId);
+        if (!patientObjectId) {
+          alert("Patient not found. Please check the Patient ID.");
+          return;
+        }
+        const table = document.getElementById("prescriptionBody");
+        const medicines = [];
+        for (let i = 0; i < table.rows.length; i++) {
+          const cells = table.rows[i].cells;
+          medicines.push({
+            medicine: cells[0].textContent,
+            dosage: cells[1].textContent,
+            frequency: cells[2].textContent,
+            duration: cells[3].textContent
+          });
+        }
+        try {
+          const response = await fetch("http://localhost:5000/doctor/prescription", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ patientId: patientObjectId, medicines })
+          });
+          const result = await response.json();
+          alert(result.message || "Prescription submitted!");
+          document.getElementById("prescriptionBody").innerHTML = "";
+        } catch (error) {
+          console.error("Error submitting prescription:", error);
+          alert("Failed to submit prescription.");
+        }
+      }
+
+      // ----------------------
+      // MEDICAL TEST Functions
+      // ----------------------
+      function addTest() {
+        const testName = document.getElementById("testName").value;
+        const testNotes = document.getElementById("testNotes").value || "None";
+        const table = document.getElementById("medicalTestsList");
+        // Insert a new row
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${testName}</td>
+          <td>${testNotes}</td>
+        `;
+        table.appendChild(row);
+        document.getElementById("testNotes").value = "";
+      }
+
+      async function submitMedicalTest() {
+        const token = localStorage.getItem("doctor_token");
+        const customPatientId = document.getElementById("testPatientId").value;
+        // Convert custom ID to actual ObjectId
+        const patientObjectId = await getPatientObjectId(customPatientId);
+        if (!patientObjectId) {
+          alert("Patient not found. Please check the Patient ID.");
+          return;
+        }
+
+        // Collect all tests from the table
+        const table = document.getElementById("medicalTestsList");
+        const tests = [];
+        for (let i = 0; i < table.rows.length; i++) {
+          const cells = table.rows[i].cells;
+          tests.push({
+            testName: cells[0].textContent,
+            notes: cells[1].textContent
+          });
+        }
+
+        try {
+          const response = await fetch("http://localhost:5000/doctor/medicaltest", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}` 
+            },
+            body: JSON.stringify({ patientId: patientObjectId, tests })
+          });
+          const result = await response.json();
+          alert(result.message || "Medical test record saved!");
+          // Clear the table after submission
+          document.getElementById("medicalTestsList").innerHTML = "";
+        } catch (error) {
+          console.error("Error submitting medical test:", error);
+          alert("Failed to submit medical test.");
+        }
+      }
+
+      // ----------------------
+      // ADVANCED IMAGING ANALYSIS Functions
+      // ----------------------
+      let currentDicomModality = "xray";
+      function setDicomModality(modality) {
+        currentDicomModality = modality;
+        console.log("Selected modality:", modality);
+        document.getElementById("dicomFile").value = "";
+        document.getElementById("dicomImages").style.display = "none";
+      }
+
+      function handleDicomFile(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const url = URL.createObjectURL(file);
+          document.getElementById("originalImage").src = url;
+          document.getElementById("grayscaleImage").src = url;
+          document.getElementById("contrastImage").src = url;
+          // Apply edge detection from the contrast enhanced image
+          applyEdgeDetection(url);
+          // Apply segmentation using basic Otsu thresholding
+          applySegmentation(url);
+          document.getElementById("dicomImages").style.display = "block";
+        }
+      }
+
+      // Function to perform edge detection on a contrast-enhanced image
+      function applyEdgeDetection(url) {
+        const image = new Image();
+        image.crossOrigin = "Anonymous";
+        image.src = url;
+        image.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0);
+          let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          // Convert image to grayscale
+          for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+            data[i] = data[i+1] = data[i+2] = avg;
+          }
+          
+          // Apply contrast enhancement on the grayscale image
+          // Using the formula: newValue = factor * (value - 128) + 128
+          const contrastFactor = 2.0; // Increase this factor for higher contrast
+          for (let i = 0; i < data.length; i += 4) {
+            let enhanced = contrastFactor * (data[i] - 128) + 128;
+            enhanced = enhanced < 0 ? 0 : enhanced > 255 ? 255 : enhanced;
+            data[i] = data[i+1] = data[i+2] = enhanced;
+          }
+          ctx.putImageData(imageData, 0, 0);
+          
+          // Get the contrast enhanced image data for edge detection
+          const enhancedData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          const width = canvas.width;
+          const height = canvas.height;
+          const output = ctx.createImageData(width, height);
+          const outputData = output.data;
+
+          // Apply Laplacian convolution kernel: [0, -1, 0, -1, 4, -1, 0, -1, 0]
+          for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+              const idx = (y * width + x) * 4;
+              const center = enhancedData[idx];
+              const top = enhancedData[((y - 1) * width + x) * 4];
+              const bottom = enhancedData[((y + 1) * width + x) * 4];
+              const left = enhancedData[(y * width + (x - 1)) * 4];
+              const right = enhancedData[(y * width + (x + 1)) * 4];
+              let edge = 4 * center - top - bottom - left - right;
+              edge = Math.abs(edge) * 2; // Multiply to further brighten the edges
+              if (edge > 255) edge = 255;
+              outputData[idx] = outputData[idx+1] = outputData[idx+2] = edge;
+              outputData[idx+3] = 255;
+            }
+          }
+          
+          // Draw the edge-detected image and set it as the src for the edgeImage
+          const edgeCanvas = document.createElement('canvas');
+          edgeCanvas.width = width;
+          edgeCanvas.height = height;
+          edgeCanvas.getContext('2d').putImageData(output, 0, 0);
+          const edgeUrl = edgeCanvas.toDataURL();
+          document.getElementById("edgeImage").src = edgeUrl;
+        };
+      }
+
+      // New: Function to perform basic segmentation using Otsu thresholding
+      function applySegmentation(url) {
+        const image = new Image();
+        image.crossOrigin = "Anonymous";
+        image.src = url;
+        image.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0);
+          let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          // Convert to grayscale
+          for (let i = 0; i < data.length; i += 4) {
+            const gray = (data[i] + data[i+1] + data[i+2]) / 3;
+            data[i] = data[i+1] = data[i+2] = gray;
+          }
+
+          // Compute histogram
+          const hist = new Array(256).fill(0);
+          for (let i = 0; i < data.length; i += 4) {
+            hist[data[i]]++;
+          }
+
+          // Compute Otsu threshold
+          let total = canvas.width * canvas.height;
+          let sum = 0;
+          for (let i = 0; i < 256; i++) {
+            sum += i * hist[i];
+          }
+          let sumB = 0;
+          let wB = 0;
+          let wF = 0;
+          let varMax = 0;
+          let threshold = 0;
+          for (let t = 0; t < 256; t++) {
+            wB += hist[t];
+            if (wB === 0) continue;
+            wF = total - wB;
+            if (wF === 0) break;
+            sumB += t * hist[t];
+            let mB = sumB / wB;
+            let mF = (sum - sumB) / wF;
+            let varBetween = wB * wF * Math.pow(mB - mF, 2);
+            if (varBetween > varMax) {
+              varMax = varBetween;
+              threshold = t;
+            }
+          }
+
+          // Apply threshold to segment image
+          for (let i = 0; i < data.length; i += 4) {
+            let val = data[i] > threshold ? 255 : 0;
+            data[i] = data[i+1] = data[i+2] = val;
+          }
+          ctx.putImageData(imageData, 0, 0);
+          const segUrl = canvas.toDataURL();
+          document.getElementById("segmentedImage").src = segUrl;
+        };
+      }
+      // New: Show the ImageJ.js iframe when its tab is clicked
+      function openImageJTab() {
+  console.log("ImageJ button clicked!");
+
+  // document.querySelector(".dicom-content").style.display = "none";
+  document.getElementById("dicomImages").style.display = "none";
+  document.getElementById("imagejContainer").style.display = "block";
+}
+
+      // On page load
+      function showImage(type) {
+  const containers = ["grayscale", "contrast", "edge", "segmented"];
+  containers.forEach(c => {
+    const container = document.getElementById(c + "Container");
+    if (c === type) {
+      container.classList.remove("hidden");
+    } else {
+      container.classList.add("hidden");
+    }
+  });
+}
+      window.onload = loadDoctorData;
+       // ----------------------------
+      
+
+    </script>
+    
+    
+  </body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Audiometry</title>
+  <style>
+    body { font-family: sans-serif; margin:20px; background:#f0f4f8; }
+    h1 { text-align:center; margin-bottom:24px; }
+    .container { display:flex; gap:24px; flex-wrap:wrap; }
+    .ear-box {
+      background:white; padding:20px; border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:1 1 45%;
+    }
+    .ear-box h2 { text-align:center; margin-bottom:12px; }
+    .chart-container { width:100%; height:260px; }
+    table {
+      width:100%; border-collapse:collapse; margin-top:16px;
+      table-layout:fixed; font-size:0.9rem;
+    }
+    th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+    th { background:#f7f9fb; }
+    input[type=number] {
+      width:100%; box-sizing:border-box; padding:6px;
+      border:1px solid #ccc; border-radius:4px;
+    }
+    #lossPrediction, #report {
+      background:white; padding:16px; border-radius:8px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.1); margin-top:20px;
+      font-size:0.95rem;
+    }
+    #lossPrediction h3, #report h3 { margin-top:0; }
+    .ear-title {
+      font-size:1.1rem; font-weight:bold; margin:12px 0 6px;
+    }
+    .recommendation {
+      font-style:italic; margin-top:4px;
+    }
+    button {
+      display:block; margin:30px auto 0; padding:12px 24px;
+      background:#0288d1; color:white; border:none; border-radius:4px;
+      cursor:pointer; font-size:1rem;
+    }
+  </style>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- html2canvas & jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <h1>Audiometry</h1>
+
+  <!-- Wrap everything to capture -->
+  <div id="reportContent">
+    <div class="container">
+      <div class="ear-box">
+        <h2>Right Ear</h2>
+        <div class="chart-container"><canvas id="chartRight"></canvas></div>
+        <table>
+          <thead>
+            <tr><th>Freq (Hz)</th><th>125</th><th>250</th><th>500</th><th>1k</th><th>2k</th><th>4k</th><th>8k</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AC (dB HL)</td>
+              <td><input type="number" class="ac-right" data-freq="125" min="0" max="120"></td>
+              <td><input type="number" class="ac-right" data-freq="250" min="0" max="120"></td>
+              <td><input type="number" class="ac-right" data-freq="500" min="0" max="120"></td>
+              <td><input type="number" class="ac-right" data-freq="1000" min="0" max="120"></td>
+              <td><input type="number" class="ac-right" data-freq="2000" min="0" max="120"></td>
+              <td><input type="number" class="ac-right" data-freq="4000" min="0" max="120"></td>
+              <td><input type="number" class="ac-right" data-freq="8000" min="0" max="120"></td>
+            </tr>
+            <tr>
+              <td>BC (dB HL)</td>
+              <td><input type="number" class="bc-right" data-freq="125" min="0" max="120"></td>
+              <td><input type="number" class="bc-right" data-freq="250" min="0" max="120"></td>
+              <td><input type="number" class="bc-right" data-freq="500" min="0" max="120"></td>
+              <td><input type="number" class="bc-right" data-freq="1000" min="0" max="120"></td>
+              <td><input type="number" class="bc-right" data-freq="2000" min="0" max="120"></td>
+              <td><input type="number" class="bc-right" data-freq="4000" min="0" max="120"></td>
+              <td><input type="number" class="bc-right" data-freq="8000" min="0" max="120"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ear-box">
+        <h2>Left Ear</h2>
+        <div class="chart-container"><canvas id="chartLeft"></canvas></div>
+        <table>
+          <thead>
+            <tr><th>Freq (Hz)</th><th>125</th><th>250</th><th>500</th><th>1k</th><th>2k</th><th>4k</th><th>8k</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AC (dB HL)</td>
+              <td><input type="number" class="ac-left" data-freq="125" min="0" max="120"></td>
+              <td><input type="number" class="ac-left" data-freq="250" min="0" max="120"></td>
+              <td><input type="number" class="ac-left" data-freq="500" min="0" max="120"></td>
+              <td><input type="number" class="ac-left" data-freq="1000" min="0" max="120"></td>
+              <td><input type="number" class="ac-left" data-freq="2000" min="0" max="120"></td>
+              <td><input type="number" class="ac-left" data-freq="4000" min="0" max="120"></td>
+              <td><input type="number" class="ac-left" data-freq="8000" min="0" max="120"></td>
+            </tr>
+            <tr>
+              <td>BC (dB HL)</td>
+              <td><input type="number" class="bc-left" data-freq="125" min="0" max="120"></td>
+              <td><input type="number" class="bc-left" data-freq="250" min="0" max="120"></td>
+              <td><input type="number" class="bc-left" data-freq="500" min="0" max="120"></td>
+              <td><input type="number" class="bc-left" data-freq="1000" min="0" max="120"></td>
+              <td><input type="number" class="bc-left" data-freq="2000" min="0" max="120"></td>
+              <td><input type="number" class="bc-left" data-freq="4000" min="0" max="120"></td>
+              <td><input type="number" class="bc-left" data-freq="8000" min="0" max="120"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="lossPrediction">
+      <h3>Hearing Loss Classification &amp; Hearing-Aid Recommendation</h3>
+      <p class="ear-title" id="rightLoss">Right Ear:</p>
+      <p id="rightRec" class="recommendation">Recommendation: –</p>
+      <p class="ear-title" id="leftLoss">Left Ear:</p>
+      <p id="leftRec" class="recommendation">Recommendation: –</p>
+    </div>
+  </div>
+
+  <button onclick="submitAndDownload()">Submit &amp; Download PDF</button>
+  <div id="report" style="white-space:pre-wrap; margin-top:20px;"></div>
+
+  <script>
+    const { jsPDF } = window.jspdf;
+    const freqs = [125,250,500,1000,2000,4000,8000];
+
+    function makeConfig(ctx) {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: freqs,
+          datasets: [
+            {
+              label: 'AC',
+              data: Array(freqs.length).fill(null),
+              fill: false,
+              borderColor: 'rgba(255,128,0,0.8)',
+              pointStyle: 'circle',
+              pointRadius: 6,
+              borderWidth: 2
+            },
+            {
+              label: 'BC',
+              data: Array(freqs.length).fill(null),
+              fill: false,
+              borderColor: 'rgba(220,20,60,0.8)',
+              pointStyle: 'cross',
+              pointRadius: 8,
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          animation: false,
+          scales: {
+            x: { title:{ display:true, text:'Frequency (Hz)' } },
+            y: {
+              min: 0, max: 120, reverse: true,
+              title:{ display:true, text:'Threshold (dB HL)' }
+            }
+          },
+          plugins:{ legend:{ position:'bottom' } }
+        }
+      });
+    }
+
+    let chartR, chartL;
+    window.addEventListener('DOMContentLoaded', () => {
+      chartR = makeConfig(document.getElementById('chartRight').getContext('2d'));
+      chartL = makeConfig(document.getElementById('chartLeft').getContext('2d'));
+
+      document.querySelectorAll('.ac-right, .bc-right')
+        .forEach(i => i.addEventListener('input', () => update('right')));
+      document.querySelectorAll('.ac-left, .bc-left')
+        .forEach(i => i.addEventListener('input', () => update('left')));
+
+      update('right');
+      update('left');
+    });
+
+    function update(ear) {
+      const chart = ear==='right'?chartR:chartL;
+      const acEls = document.querySelectorAll(`.ac-${ear}`);
+      const bcEls = document.querySelectorAll(`.bc-${ear}`);
+      const acArr = [], bcArr = [];
+      acEls.forEach((inp,i) => {
+        const v = inp.valueAsNumber;
+        chart.data.datasets[0].data[i] = (v>=0&&v<=120)?v:null;
+        acArr[i] = v||0;
+      });
+      bcEls.forEach((inp,i) => {
+        const v = inp.valueAsNumber;
+        chart.data.datasets[1].data[i] = (v>=0&&v<=120)?v:null;
+        bcArr[i] = v||0;
+      });
+      chart.update();
+      classify(ear, acArr, bcArr);
+    }
+
+    function predictLoss(val) {
+      if (val >= 91) return 'Profound (≥91 dB HL)';
+      if (val >= 71) return 'Severe (71–90 dB HL)';
+      if (val >= 56) return 'Moderately severe (56–70 dB HL)';
+      if (val >= 41) return 'Moderate (41–55 dB HL)';
+      if (val >= 25) return 'Mild (25–40 dB HL)';
+      return 'Normal (<25 dB HL)';
+    }
+
+    function recommendAid(acClass) {
+      if (acClass.startsWith('Profound')||acClass.startsWith('Severe'))
+        return 'Behind-the-Ear (BTE)';
+      if (acClass.startsWith('Moderately severe')||acClass.startsWith('Moderate'))
+        return 'In-the-Ear (ITE)';
+      if (acClass.startsWith('Mild'))
+        return 'Receiver-in-Canal (RIC)';
+      return 'No hearing aid required';
+    }
+
+    function classify(ear, acArr, bcArr) {
+      const acMax = Math.max(...acArr);
+      const bcMax = Math.max(...bcArr);
+      const acClass = predictLoss(acMax);
+      const bcClass = predictLoss(bcMax);
+      document.getElementById(`${ear}Loss`).textContent =
+        `${ear.charAt(0).toUpperCase()+ear.slice(1)} Ear: AC: ${acClass}, BC: ${bcClass}`;
+      document.getElementById(`${ear}Rec`).textContent =
+        `Recommendation: ${recommendAid(acClass)}`;
+    }
+
+    async function submitAndDownload() {
+      // update classification
+      update('right');
+      update('left');
+      // render PDF
+      const content = document.getElementById('reportContent');
+      const canvas = await html2canvas(content, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const margin = 40;
+      const pdfWidth = pdf.internal.pageSize.getWidth() - margin*2;
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.text('Audiometry Report', margin, 30);
+      pdf.addImage(imgData, 'PNG', margin, 50, pdfWidth, pdfHeight);
+      pdf.save('audiometry_report.pdf');
+    }
+  </script>
+</body>
+</html>

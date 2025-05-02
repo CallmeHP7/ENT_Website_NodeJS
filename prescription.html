@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prescriptions</title>
+</head>
+<body>
+    <h2>Your Prescriptions</h2>
+    <ul>
+        {% for appointment in appointments %}
+        <li>
+            Doctor: {{ appointment.doctor_id }} <br>
+            Time: {{ appointment.time_slot }} <br>
+            Prescription: {{ appointment.prescription or "Not Available Yet" }}
+        </li>
+        {% endfor %}
+    </ul>
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>
